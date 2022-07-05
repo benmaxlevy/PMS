@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 using PMS.Contexts;
 using PMS.Models;
+using PMS.Migrate;
+using PMS.Lib;
 
 using Sharprompt;
 
@@ -38,7 +40,7 @@ namespace PMS.Main
                 if (setupChildCommand == _setupChildCommand.CreateUser)
                 {
                     // validate no spaces in username
-                    var user = Prompt.Input<string>("Enter the user's name", validators: new[] {Validators.Required(), Validators.RegularExpression("^\\S*$", "damn bro, ok")});
+                    var user = Prompt.Input<string>("Enter the user's name", validators: new[] {Validators.Required(), Validators.RegularExpression("^\\S*$", "No spaces are permitted in the username")});
                     var password = Prompt.Password("Enter the user's password", validators: new[] {Validators.Required(), Validators.MinLength(6)});
                     var confirmPassword = Prompt.Password("Confirm the user's password", validators: new[] {Validators.Required()});
                     if (password != confirmPassword)
@@ -47,30 +49,38 @@ namespace PMS.Main
                         return;
                     }
                     var rate = Prompt.Input<double>("Enter the user's hourly rate", validators: new[] {Validators.Required()});
-                    
-                    using(SHA256 sha256Hash = SHA256.Create())
+
+                    password = Hash.GetHash(password);
+
+                    try
                     {
-                        var passwordHash = sha256Hash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                        password = BitConverter.ToString(passwordHash).Replace("-", "").ToLower();
+                        var userContext = new UserContext();
+                        userContext.User.Add(new User
+                        {
+                            Username = user,
+                            HashedPassword = password,
+                            HourlyRate = rate,
+                        });
+                        userContext.SaveChanges();
                     }
-                    
-                    var userContext = new UserContext();
-                    userContext.User.Add(new User
+                    catch (Exception e)
                     {
-                        Username = user,
-                        HashedPassword = password,
-                        HourlyRate = rate,
-                    });
-                    userContext.SaveChanges();
+                        Console.WriteLine(e.Message);
+                        return;
+                    }
+
                     Console.WriteLine("User created");
                 }
                 else if (setupChildCommand == _setupChildCommand.MigrateDatabase)
                 {
-                    var result = Migrate.Migrate.RunMigration();
+                    var result = Migration.RunMigration();
                     var message = result == -1 ? "Already migrated" : "Migrated";
                     Console.WriteLine(message);
-                    return;
                 }
+            }
+            else if (parentCommand == _parentCommand.Login)
+            {
+                
             }
         }
     }

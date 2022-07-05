@@ -4,7 +4,7 @@ using PMS.Contexts;
 
 namespace PMS.Migrate
 {
-    internal class Migrate
+    internal class Migration
     {
         internal static int RunMigration()
         {
