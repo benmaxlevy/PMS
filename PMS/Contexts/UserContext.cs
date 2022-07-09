@@ -1,18 +1,13 @@
-﻿using System.Configuration;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using MySql.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.Json;
-
 using PMS.Models;
 
 namespace PMS.Contexts
 {
     internal class UserContext: DbContext
     {
-        public DbSet<User> User { get; set; } = null!;
-        public DbSet<DayIncome> DayIncome { get; set; } = null!;
+        public DbSet<User>? User { get; }
+        public DbSet<DayIncome>? DayIncome { get; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -51,6 +46,7 @@ namespace PMS.Contexts
             
             modelBuilder.Entity<DayIncome>(entity =>
             {
+                entity.HasKey(e => e.ID);
                 entity.Property(e => e.Timestamp).IsRequired();
                 entity.Property(e => e.Income).IsRequired();
                 entity.HasOne(e => e.User)

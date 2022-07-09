@@ -2,16 +2,16 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using PMS.Contexts;
 
-namespace PMS.Migrate
+namespace PMS.Lib
 {
     internal class Migration
     {
         internal static int RunMigration()
         {
-            UserContext context = new UserContext();
             try
             {
-                RelationalDatabaseCreator databaseCreator =
+                var context = new UserContext();
+                var databaseCreator =
                     (RelationalDatabaseCreator) context.Database.GetService<IDatabaseCreator>();
                 databaseCreator.CreateTables();
             }

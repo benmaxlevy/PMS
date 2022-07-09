@@ -1,43 +1,37 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using System.Net;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using System.ComponentModel.DataAnnotations;
 
 using PMS.Contexts;
 using PMS.Models;
-using PMS.Migrate;
 using PMS.Lib;
 
 using Sharprompt;
 
-namespace PMS.Main
+namespace PMS
 {
     internal class Program
     {
-        private enum _parentCommand
+        private enum ParentCommand
         {
             Setup,
-            Login,
+            Login
         }
 
-        private enum _setupChildCommand
+        private enum SetupChildCommand
         {
             [Display(Name = "Create New User")]
             CreateUser,
             [Display(Name = "Migrate Database (creates any non-created tables)")]
-            MigrateDatabase,
+            MigrateDatabase
         }
         
         static void Main(String[] args)
         {
             // cli prompt for migrate, etc - the arrow "dropdown"
-            var parentCommand = Prompt.Select<_parentCommand>("What would you like to do?");
-            if (parentCommand == _parentCommand.Setup)
+            var parentCommand = Prompt.Select<ParentCommand>("What would you like to do?");
+            if (parentCommand == ParentCommand.Setup)
             {
-                var setupChildCommand = Prompt.Select<_setupChildCommand>("What would you like to do?");
-                if (setupChildCommand == _setupChildCommand.CreateUser)
+                var setupChildCommand = Prompt.Select<SetupChildCommand>("What would you like to do?");
+                if (setupChildCommand == SetupChildCommand.CreateUser)
                 {
                     // validate no spaces in username
                     var user = Prompt.Input<string>("Enter the user's name", validators: new[] {Validators.Required(), Validators.RegularExpression("^\\S*$", "No spaces are permitted in the username")});
@@ -55,12 +49,13 @@ namespace PMS.Main
                     try
                     {
                         var userContext = new UserContext();
-                        userContext.User.Add(new User
+                        var u = new User
                         {
                             Username = user,
                             HashedPassword = password,
                             HourlyRate = rate,
-                        });
+                        };
+                        userContext.User.Add(u);
                         userContext.SaveChanges();
                     }
                     catch (Exception e)
@@ -71,16 +66,26 @@ namespace PMS.Main
 
                     Console.WriteLine("User created");
                 }
-                else if (setupChildCommand == _setupChildCommand.MigrateDatabase)
+                else if (setupChildCommand == SetupChildCommand.MigrateDatabase)
                 {
                     var result = Migration.RunMigration();
                     var message = result == -1 ? "Already migrated" : "Migrated";
                     Console.WriteLine(message);
                 }
             }
-            else if (parentCommand == _parentCommand.Login)
+            else if (parentCommand == ParentCommand.Login)
             {
-                
+                var username = Prompt.Input<string>("Enter the username", validators: new[] {Validators.Required()});
+                var password = Prompt.Password("Enter the password", validators: new[] {Validators.Required()});
+                password = Hash.GetHash(password);
+                var userContext = new UserContext();
+                var user = userContext.User.SingleOrDefault(u => u.Username == username && u.HashedPassword == password, null);
+                if (user == null)
+                {
+                    Console.WriteLine("Invalid username or password");
+                    return;
+                }
+                Console.WriteLine("You have been logged in. Enjoy your time!");
             }
         }
     }
