@@ -6,8 +6,8 @@ namespace PMS.Contexts
 {
     internal class UserContext: DbContext
     {
-        public DbSet<User>? User { get; }
-        public DbSet<DayIncome>? DayIncome { get; }
+        public DbSet<User>? User { get; set; }
+        public DbSet<DayIncome>? DayIncome { get; set;  }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
