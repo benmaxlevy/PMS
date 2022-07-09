@@ -86,13 +86,13 @@ namespace PMS
                     var username = Prompt.Input<string>("Enter the username", validators: new[] {Validators.Required()});
                     var password = Prompt.Password("Enter the password", validators: new[] {Validators.Required()});
                     password = Hash.GetHash(password);
-                    var user = new User();
+                    User user;
                     
                     if (userContext.User != null)
                     {
                         try
                         {
-                            Login.LoginUser(ref user, username, password, userContext);
+                            Login.LoginUser(out user, username, password, userContext);
                             // find user based on username and hashed password
                             if (user == null)
                             {
